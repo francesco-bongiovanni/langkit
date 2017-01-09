@@ -555,28 +555,11 @@ class CompileCtx(object):
 
         # Get the list of ASTNode types from the Struct metaclass
         from langkit.compiled_types import (
-            LexicalEnvType, StructMetaclass
+            LexicalEnvType, StructMetaclass, T
         )
         env_element = StructMetaclass.root_grammar_class.env_element()
 
         self.astnode_types = list(StructMetaclass.astnode_types)
-
-        # Here we're skipping Struct because it's not a real type in
-        # generated code. We're also putting env_metadata and env_element in
-        # the beginning and in the right dependency order (the metadata type
-        # before the env element type).
-        # TODO: Using a dependency order topological sort wouldn't hurt at
-        # some point.
-        self.struct_types = [
-            t for t in StructMetaclass.struct_types
-            if t not in [StructMetaclass.env_metadata, env_element]
-        ]
-        self.struct_types.insert(0, env_element)
-
-        if StructMetaclass.env_metadata:
-            self.struct_types = (
-                [StructMetaclass.env_metadata] + self.struct_types
-            )
 
         self.root_grammar_class = StructMetaclass.root_grammar_class
         self.generic_list_type = self.root_grammar_class.generic_list_type
@@ -791,6 +774,21 @@ class CompileCtx(object):
             for r_name, r in self.grammar.rules.items():
                 with r.error_context():
                     r.compile()
+
+        # Here we're skipping Struct because it's not a real type in
+        # generated code. We're also putting env_metadata and env_element in
+        # the beginning and in the right dependency order (the metadata type
+        # before the env element type).
+        # TODO: Using a dependency order topological sort wouldn't hurt at
+        # some point.
+        from langkit.compiled_types import StructMetaclass, T
+        env_element = StructMetaclass.root_grammar_class.env_element()
+        self.struct_types = [
+            t for t in StructMetaclass.struct_types
+            if t not in [StructMetaclass.env_metadata, env_element]
+            ]
+        self.struct_types.insert(0, env_element)
+        self.struct_types.insert(0, T.env_md)
 
         unresolved_types = set([t for t in self.astnode_types
                                 if not t.is_type_resolved])

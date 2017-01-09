@@ -2065,10 +2065,13 @@ class ASTNode(Struct):
         value, as well as the metadata associated to this node in the
         source lexical environment.
         """
+        type_name = 'EnvElement{}'.format(cls.name().camel
+                                          if cls != T.root_node else '')
+
+        print "IN ENV ELEMENT FOR {}".format(cls.name().lower), type_name
 
         env_element_klass = type(
-            'EnvElement{}'.format(cls.name().camel
-                                  if cls != T.root_node else ''),
+            type_name,
             (Struct, ), {
                 'el': BuiltinField(cls, doc="The stored AST node"),
                 'MD': BuiltinField(
@@ -2078,6 +2081,7 @@ class ASTNode(Struct):
                 'el_type': cls
             }
         )
+        print StructMetaclass.struct_types
 
         if cls == T.root_node:
             # LexicalEnv.get, which is bound in the AST.C generate package,
